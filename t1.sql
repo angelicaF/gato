@@ -248,7 +248,7 @@ where idPadre=1;
 
 select *
 from tree
-where idPadre=1;
+where peso=0;
 
 
 select max(peso) 
@@ -260,6 +260,8 @@ order by peso;
   select max(c) into c
   from numer
   order  by c; 
+
+
 
 
 
