@@ -174,11 +174,19 @@ BEGIN
                       pesoN:=0;
                ELSE
                     GENERATE_TREE(pos, idRaiz, tableroH);
-                  
-                    select max(peso) into pesoN
-                    from tree
-                    where idPadre=pos
-                    order by peso;   
+                    IF turno='o'THEN
+                      select max(peso) into pesoN
+                      from tree
+                      where idPadre=pos
+                      order by peso;
+                    ELSE
+                      select min(peso) into pesoN
+                      from tree
+                      where idPadre=pos
+                      order by peso;
+                    END IF;
+                    
+                       
               END IF;           
               insert into tree (idRaiz,idPadre, tablero, peso)
               values(pos,idRaiz, tableroH, pesoN);  
