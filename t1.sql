@@ -87,21 +87,12 @@ drop PROCEDURE GENERATE_TREE;
 create sequence idRaiz_seq;
 
 create table tree (
-  idRaiz number,
+  idRaiz number primary key,
   idPadre number,
   tablero board_array,
   peso int
 );
-
-CREATE OR REPLACE PROCEDURE obtenerPeso(idRaiz_A in number, pesoR out int)
-IS
-BEGIN
-  select max(peso) into pesoR
-  from tree
-  where idPadre=idRaiz_A
-  order by peso; 
-END obtenerPeso;
-
+create index indPadre on tree(idPadre);
 
 ----------------------------------------------------------------------------------------------------
 --generar arbol
@@ -223,51 +214,20 @@ BEGIN
   obtenerPeso(tableroR,turno, idRaiz_A, pesoR);
   insert into numer values (pesoR);
 END;
-
-
-
-
-select * from numer
-create table numer(
-n board_array
-
-);
-drop table numer
-
-insert into numer 
-values(-1,3);
-
-----------------------------------------------------------------
-drop trigger idA_trig;
-create or replace trigger idA_trig
-before insert on tree
-for each row
-begin
-    :new.idRaiz := idRaiz_seq.nextval;
-    -- or if pre 11G:
-    -- select ts_id_seq.nextval into :new.ts_id from dual;
-end;
-
-----------------------------------------------------------------
-
-select *
-from numer
-where idPadre=1;
+---------------------------------------------------------------
 
 select *
 from tree
 where peso=0;
-
 
 select max(peso) 
 from tree
 where idPadre=6
 order by peso; 
 
-
-  select max(c) into c
-  from numer
-  order  by c; 
+select max(c) into c
+from numer
+order  by c; 
 
 
 
