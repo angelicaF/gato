@@ -1,96 +1,100 @@
+-- SET SERVEROUTPUT ON; 
+-- declare
+  -- type estadoJuego_curs is ref CURSOR return tree%ROWTYPE;
+  -- est_Curs estadoJuego_curs;  
+  -- juego tic_tac_toe:= tic_tac_toe(1);
+  
+  -- estado_act board_array;
+  -- movin board_array;
+  
+  -- game_id number;
+  -- result integer;
+  -- posicion int;  
+-- BEGIN
+  -- movin:=board_array(null, null, null, null, null, null, null, null, null);
+  -- game_id :=0;
+  
+  -- while(result <> 1) 
+  -- loop
+    -- --inicio juego
+    -- posicion := '&posicion'; 
+    -- movin(posicion):='x'; 
+  
+    -- --busca la jugada actual con el dato que se acaba de insertar
+    -- OPEN est_Curs FOR
+      -- select idRaiz, tablero
+      -- from tree
+      -- where idPadre=game_id;  
+      
+       -- IF (movin(1)=est_Curs.tablero(1) and movin(2)=est_Curs.tablero(2) and movin(3)=est_Curs.tablero(3) 
+          -- and movin(4)=est_Curs.tablero(4) and movin(5)=est_Curs.tablero(5) and movin(6)=est_Curs.tablero(6)
+          -- and movin(7)=estaest_Curs.tablerodo_act(7) and movin(8)=est_Curs.tablero(8) and movin(9)=est_Curs.tablero(9))
+       -- THEN
+        -- game_id= est_Curs.idRaiz;
+       -- END IF;      
+    -- CLOSE est_Curs;    
+    -- movin:=play(movin IN board_array,result OUT integer,game_id IN OUT number);
+  -- end loop;
+  
+-- END;
+
+----------------------------------------------------------------
 create or replace type tic_tac_toe as object (
-  tab int, 
-   member function play(my_move IN board_array, result OUT integer, game_id IN OUT number) return board_array
+  algo int,
+  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array
 );
 
+create or replace function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array 
 
-create or replace TYPE BODY TIC_TAC_TOE AS
+CREATE OR REPLACE TYPE BODY TIC_TAC_TOE AS
   member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array AS
-  BEGIN
-   
-    
-    
-    RETURN NULL;
-  END play;
-
-END;
-
-SET SERVEROUTPUT ON; 
-declare
+  tableroActual number;
+  tableroEntrada board_array;
+  tableroResp board_array;
+  juego number;
+  peso number;
   type estadoJuego_curs is ref CURSOR return tree%ROWTYPE;
   est_Curs estadoJuego_curs;  
-  juego tic_tac_toe:= tic_tac_toe(1);
   
-  estado_act board_array;
-  movin board_array;
-  
-  game_id number;
-  result integer;
-  posicion int;  
-BEGIN
-  movin:=board_array(null, null, null, null, null, null, null, null, null);
-  game_id :=0;
-  
-  while(result <> 1) 
-  loop
-    --inicio juego
-    posicion := '&posicion'; 
-    movin(posicion):='x'; 
-  
+  BEGIN    
     --busca la jugada actual con el dato que se acaba de insertar
     OPEN est_Curs FOR
       select idRaiz, tablero
       from tree
       where idPadre=game_id;  
       
-       IF (movin(1)=est_Curs.tablero(1) and movin(2)=est_Curs.tablero(2) and movin(3)=est_Curs.tablero(3) 
-          and movin(4)=est_Curs.tablero(4) and movin(5)=est_Curs.tablero(5) and movin(6)=est_Curs.tablero(6)
-          and movin(7)=estaest_Curs.tablerodo_act(7) and movin(8)=est_Curs.tablero(8) and movin(9)=est_Curs.tablero(9))
+       IF (my_move(1)=est_Curs.tablero(1) and my_move(2)=est_Curs.tablero(2) and my_move(3)=est_Curs.tablero(3) 
+          and my_move(4)=est_Curs.tablero(4) and my_move(5)=est_Curs.tablero(5) and my_move(6)=est_Curs.tablero(6)
+          and my_move(7)=estaest_Curs.tablerodo_act(7) and my_move(8)=est_Curs.tablero(8) and my_move(9)=est_Curs.tablero(9))
        THEN
-        game_id= est_Curs.idRaiz;
+        tableroActual := est_Curs.idRaiz;
        END IF;      
-    CLOSE est_Curs;    
-    movin:=play(movin IN board_array,result OUT integer,game_id IN OUT number);
-  end loop;
-  
-END;
-
-
-
-
-----------------------------------------------------------------
-create or replace type tic_tac_toe as object (
-  
-  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number := null) return board_array
-);
-
-CREATE OR REPLACE
-TYPE BODY TIC_TAC_TOE AS
-
-  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number := null) return board_array AS
-  BEGIN
-    /* TODO implementation required */
-    RETURN NULL;
+    CLOSE est_Curs;      
+    
+    select max(peso),idRaiz, tablero into peso, juego, tableroResp from tree where idPadre = tableroActual and rownum = 1 group by peso,idRaiz, tablero;
+    --select max(peso),idRaiz from tree where idPadre = 0 group by peso,idRaiz
+    game_id := juego;
+    tableroResp := NULL;
+    return tableroResp;          
   END play;
-
 END;
 
-drop type tic_tac_toe
+drop type tic_tac_toe;
+select * from tree where rownum <=14
 
-create or replace type board_array as varray(9) of char(1);
+  create or replace type board_array as varray(9) of char(1);
 
 drop sequence idRaiz_seq;
 drop table tree;
-drop PROCEDURE obtenerPeso;
 drop PROCEDURE GENERATE_TREE;
 
 create sequence idRaiz_seq;
 
 create table tree (
   idRaiz number primary key,
-  idPadre number,
-  tablero board_array,
-  peso int
+  idPadre number,  
+  peso int,
+  tablero board_array
 );
 create index indPadre on tree(idPadre);
 
@@ -129,8 +133,6 @@ BEGIN
          turno:='o';             
     END IF;
     pos:=idRaiz;
-     
-        
         --llena los nuevo tableros
         FOR j IN 1..9
         LOOP
@@ -179,8 +181,8 @@ BEGIN
                     
                        
               END IF;           
-              insert into tree (idRaiz,idPadre, tablero, peso)
-              values(pos,idRaiz, tableroH, pesoN);  
+              insert into tree (idRaiz,idPadre,peso,tablero)
+              values(pos,idRaiz,pesoN,tableroH);  
                      
           END IF;     
         END LOOP;
@@ -194,13 +196,10 @@ BEGIN
   idRaiz:=0;
   idPadre :=null;
   tablero:=board_array(null, null, null, null,null,null,null,null,null);
-  insert into tree values(0, null,tablero,0);
+  insert into tree values(0, null,0,tablero);
   GENERATE_TREE(idRaiz ,idPadre, tablero);
 END;
 ---------------------------------------------------------------------------------
-
-
-
 
 declare
 tableroR board_array;
@@ -215,21 +214,14 @@ BEGIN
   insert into numer values (pesoR);
 END;
 ---------------------------------------------------------------
-
-select *
-from tree
-where peso=0;
-
-select max(peso) 
-from tree
-where idPadre=6
-order by peso; 
-
-select max(c) into c
-from numer
-order  by c; 
-
-
-
+declare 
+  tableroActual number;
+  tableroResp board_array;
+  juego number;
+  peso number;
+  tableroResp:=board_array('x', 'o', 'x', 'o','x','o',null,null,null);
+  BEGIN
+    select * into tableroActual from tree where idPadre = 0 and tablero(1) = 'x';    
+END;
 
 
