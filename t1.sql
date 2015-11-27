@@ -53,28 +53,25 @@ CREATE OR REPLACE TYPE BODY TIC_TAC_TOE AS
   tableroResp board_array;
   juego number;
   peso number;
-  type estadoJuego_curs is ref CURSOR return tree%ROWTYPE;
-  est_Curs estadoJuego_curs;  
+  CURSOR estadoJuego_curs IS
+    select idRaiz, tablero
+    from tree
+    where idPadre=game_id;
   
   BEGIN    
     --busca la jugada actual con el dato que se acaba de insertar
-    OPEN est_Curs FOR
-      select idRaiz, tablero
-      from tree
-      where idPadre=game_id;  
-      
+  FOR est_Curs in estadoJuego_curs
+  LOOP
        IF (my_move(1)=est_Curs.tablero(1) and my_move(2)=est_Curs.tablero(2) and my_move(3)=est_Curs.tablero(3) 
           and my_move(4)=est_Curs.tablero(4) and my_move(5)=est_Curs.tablero(5) and my_move(6)=est_Curs.tablero(6)
-          and my_move(7)=estaest_Curs.tablerodo_act(7) and my_move(8)=est_Curs.tablero(8) and my_move(9)=est_Curs.tablero(9))
+          and my_move(7)=est_Curs.tablero(7) and my_move(8)=est_Curs.tablero(8) and my_move(9)=est_Curs.tablero(9))
        THEN
         tableroActual := est_Curs.idRaiz;
-       END IF;      
-    CLOSE est_Curs;      
-    
+       END IF;
+  END LOOP;     
     select max(peso),idRaiz, tablero into peso, juego, tableroResp from tree where idPadre = tableroActual and rownum = 1 group by peso,idRaiz, tablero;
     --select max(peso),idRaiz from tree where idPadre = 0 group by peso,idRaiz
     game_id := juego;
-    tableroResp := NULL;
     return tableroResp;          
   END play;
 END;
@@ -203,25 +200,12 @@ END;
 
 declare
 tableroR board_array;
-turno char;
 idRaiz_A number;
 pesoR int;
 BEGIN
-  tableroR:=board_array('x', 'o', 'x', 'o','x','o',null,null,null);
-  turno:='x';
-  idRaiz_A:=6;  
-  obtenerPeso(tableroR,turno, idRaiz_A, pesoR);
-  insert into numer values (pesoR);
+  tableroR:=board_array('x', null,null,null,null,null,null,null,null);
+  tableroR := play(tableroR,0);
 END;
 ---------------------------------------------------------------
-declare 
-  tableroActual number;
-  tableroResp board_array;
-  juego number;
-  peso number;
-  tableroResp:=board_array('x', 'o', 'x', 'o','x','o',null,null,null);
-  BEGIN
-    select * into tableroActual from tree where idPadre = 0 and tablero(1) = 'x';    
-END;
 
 
