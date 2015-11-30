@@ -41,7 +41,7 @@
 ----------------------------------TABLAS Y TIPOS---------------------------------------------------------
 
 
-create type board_array as varray(9) of char(1);
+create type board_array as varray(9) of char(1);  --tablero de juego "3x3"
 
 create table tree (
   idRaiz number primary key,  --id del nodo
@@ -49,64 +49,22 @@ create table tree (
   peso int,                   --peso: 1 gano, 0 empato, -1 pierdo
   tablero board_array         --tablero con la jugada correspondiente al nodo
 );
+
 create index indPadre on tree(idPadre); --Se crea un indice para optimizar las consultas
 
-create sequence idRaiz_seq;
+create sequence idRaiz_seq;       --Secuencia para : 
 
----------------------------------------------FIRMAS------------------------------------------------------------
-create or replace type tic_tac_toe as object (
-  algo int,
-  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array
-);
-
----------------------------------------------------------------------------------------------------------------
-
--------------------------------------Funcion play--------------------------------------------------------------
-CREATE OR REPLACE TYPE BODY TIC_TAC_TOE AS
-  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array IS
-  tableroActual number;
-  tableroEntrada board_array;
-  tableroResp board_array;
-  juego number;
-  peso number;
-  CURSOR estadoJuego_curs IS
-    select idRaiz, tablero
-    from tree
-    where idPadre=game_id;
-  
-  BEGIN    
-    --busca la jugada actual con el dato que se acaba de insertar
-
-  --create sequence idRaiz_seq;
-  FOR est_Curs in estadoJuego_curs
-  LOOP
-       IF (my_move(1)=est_Curs.tablero(1) and my_move(2)=est_Curs.tablero(2) and my_move(3)=est_Curs.tablero(3) 
-          and my_move(4)=est_Curs.tablero(4) and my_move(5)=est_Curs.tablero(5) and my_move(6)=est_Curs.tablero(6)
-          and my_move(7)=est_Curs.tablero(7) and my_move(8)=est_Curs.tablero(8) and my_move(9)=est_Curs.tablero(9))
-       THEN
-        tableroActual := est_Curs.idRaiz;
-       END IF;
-  END LOOP;     
-    select max(peso),idRaiz, tablero into peso, juego, tableroResp from tree where idPadre = tableroActual and rownum = 1 group by peso,idRaiz, tablero;
-    --select max(peso),idRaiz from tree where idPadre = 0 group by peso,idRaiz
-    game_id := juego;
-    return tableroResp;          
-  END play;
-END;
-----------------------------------------------------------------------------------------------------------------------------------------------------------
-
------------------------------------Procedimiento para generar el arbol de juego---------------------------------------------------------------------------
-CREATE OR REPLACE PROCEDURE GENERATE_TREE(idRaiz number, idPadre  number, tableroR board_array)
-IS 
- turno char(1);
+-----------------------Se hace llena el arbol de juego con tablero y sus pesos-------------------------------------------
+create or replace PROCEDURE generaArbol(idRaiz number, idPadre  number, tableroR board_array) is
+turno char(1);
  cant_x number;
  cant_o number;
  cant_n number;
  pos number;
  tableroH board_array;
  pesoN int;
- 
 BEGIN
+  delete from tree
   cant_x:=0;
   cant_o:=0;
   cant_n:=0; 
@@ -162,7 +120,7 @@ BEGIN
                       THEN
                       pesoN:=0;
                ELSE
-                    GENERATE_TREE(pos, idRaiz, tableroH);
+                    generaArbol(pos, idRaiz, tableroH);
                     IF turno='o'THEN
                       select max(peso) into pesoN
                       from tree
@@ -180,22 +138,67 @@ BEGIN
                      
           END IF;     
         END LOOP;
-END GENERATE_TREE;
----------------------------------------------FIN PROCEDIMIENTO GENERATE_TREE---------------------------------------------------
+END generaArbol;
+--------------------------------------------------------------------------------------------------------------------------
 
------------------------------------------------Se hace llamado a Generate_tree-------------------------------------------
-declare
+---------------------------------------------FIRMAS------------------------------------------------------------
+create or replace type tic_tac_toe as object (
+  algo int,
+  member procedure generate_tree,
+  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array
+);
+
+---------------------------------------------------------------------------------------------------------------
+
+-------------------------------------Funcion play--------------------------------------------------------------
+create or replace
+TYPE BODY TIC_TAC_TOE AS
+  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array IS
+  tableroActual number;
+  tableroEntrada board_array;
+  tableroResp board_array;
+  juego number;
+  peso number;
+  CURSOR estadoJuego_curs IS
+    select idRaiz, tablero
+    from tree
+    where idPadre=game_id;
+  
+  BEGIN    
+    --busca la jugada actual con el dato que se acaba de insertar
+
+  --create sequence idRaiz_seq;
+  FOR est_Curs in estadoJuego_curs
+  LOOP
+       IF (my_move(1)=est_Curs.tablero(1) and my_move(2)=est_Curs.tablero(2) and my_move(3)=est_Curs.tablero(3) 
+          and my_move(4)=est_Curs.tablero(4) and my_move(5)=est_Curs.tablero(5) and my_move(6)=est_Curs.tablero(6)
+          and my_move(7)=est_Curs.tablero(7) and my_move(8)=est_Curs.tablero(8) and my_move(9)=est_Curs.tablero(9))
+       THEN
+        tableroActual := est_Curs.idRaiz;
+       END IF;
+  END LOOP;     
+    select max(peso),idRaiz, tablero into peso, juego, tableroResp from tree where idPadre = tableroActual and rownum = 1 group by peso,idRaiz, tablero;
+    --select max(peso),idRaiz from tree where idPadre = 0 group by peso,idRaiz
+    
+    game_id := juego;
+    return tableroResp;          
+  END play;
+  
+  -----------------------------------Procedimiento generate_tree---------------------------------------------------------------------------
+MEMBER PROCEDURE generate_tree
+IS 
   idRaiz number;
   idPadre number;
   tablero board_array;
-BEGIN
+  BEGIN
   idRaiz:=0;
   idPadre :=null;
   tablero:=board_array(null, null, null, null,null,null,null,null,null);
   insert into tree values(0, null,0,tablero);
-  GENERATE_TREE(idRaiz ,idPadre, tablero);
+  generaArbol(idRaiz ,idPadre, tablero);  
+  END generate_tree;
 END;
---------------------------------------------------------------------------------------------------------------------------
+--------------------------------------FIN BODY TIC_TAC_TOE---------------------------------------------------------------
 
 declare
 tic TIC_TAC_TOE;
@@ -207,6 +210,7 @@ res int;
 pesoR int;
 BEGIN
   tic := TIC_TAC_TOE(1);
+  tic.generate_tree;
   game_id := 0;
   res := 0;
   tableroE:=board_array('x', null,null,null,null,null,null,null,null);
@@ -214,5 +218,7 @@ BEGIN
    dbms_output.put_line(tableroR(1)||tableroR(2)||tableroR(3));
 END;
 ---------------------------------------------------------------
+
+
 
 
