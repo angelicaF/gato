@@ -38,16 +38,32 @@
   
 -- END;
 
-----------------------------------------------------------------
+----------------------------------TABLAS Y TIPOS---------------------------------------------------------
+
+
+create type board_array as varray(9) of char(1);
+
+create table tree (
+  idRaiz number primary key,  --id del nodo
+  idPadre number,             --id del nodo padre
+  peso int,                   --peso: 1 gano, 0 empato, -1 pierdo
+  tablero board_array         --tablero con la jugada correspondiente al nodo
+);
+create index indPadre on tree(idPadre); --Se crea un indice para optimizar las consultas
+
+create sequence idRaiz_seq;
+
+---------------------------------------------FIRMAS------------------------------------------------------------
 create or replace type tic_tac_toe as object (
   algo int,
   member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array
 );
 
-create or replace function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array 
+---------------------------------------------------------------------------------------------------------------
 
+-------------------------------------Funcion play--------------------------------------------------------------
 CREATE OR REPLACE TYPE BODY TIC_TAC_TOE AS
-  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array AS
+  member function play(my_move IN board_array,result OUT integer,game_id IN OUT number) return board_array IS
   tableroActual number;
   tableroEntrada board_array;
   tableroResp board_array;
@@ -60,6 +76,8 @@ CREATE OR REPLACE TYPE BODY TIC_TAC_TOE AS
   
   BEGIN    
     --busca la jugada actual con el dato que se acaba de insertar
+
+  --create sequence idRaiz_seq;
   FOR est_Curs in estadoJuego_curs
   LOOP
        IF (my_move(1)=est_Curs.tablero(1) and my_move(2)=est_Curs.tablero(2) and my_move(3)=est_Curs.tablero(3) 
@@ -75,28 +93,9 @@ CREATE OR REPLACE TYPE BODY TIC_TAC_TOE AS
     return tableroResp;          
   END play;
 END;
+----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-drop type tic_tac_toe;
-select * from tree where rownum <=14
-
-  create or replace type board_array as varray(9) of char(1);
-
-drop sequence idRaiz_seq;
-drop table tree;
-drop PROCEDURE GENERATE_TREE;
-
-create sequence idRaiz_seq;
-
-create table tree (
-  idRaiz number primary key,
-  idPadre number,  
-  peso int,
-  tablero board_array
-);
-create index indPadre on tree(idPadre);
-
-----------------------------------------------------------------------------------------------------
---generar arbol
+-----------------------------------Procedimiento para generar el arbol de juego---------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE GENERATE_TREE(idRaiz number, idPadre  number, tableroR board_array)
 IS 
  turno char(1);
@@ -175,8 +174,6 @@ BEGIN
                       where idPadre=pos
                       order by peso;
                     END IF;
-                    
-                       
               END IF;           
               insert into tree (idRaiz,idPadre,peso,tablero)
               values(pos,idRaiz,pesoN,tableroH);  
@@ -184,7 +181,9 @@ BEGIN
           END IF;     
         END LOOP;
 END GENERATE_TREE;
+---------------------------------------------FIN PROCEDIMIENTO GENERATE_TREE---------------------------------------------------
 
+-----------------------------------------------Se hace llamado a Generate_tree-------------------------------------------
 declare
   idRaiz number;
   idPadre number;
@@ -196,15 +195,23 @@ BEGIN
   insert into tree values(0, null,0,tablero);
   GENERATE_TREE(idRaiz ,idPadre, tablero);
 END;
----------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
 
 declare
+tic TIC_TAC_TOE;
+tableroE board_array;
 tableroR board_array;
 idRaiz_A number;
+game_id number;
+res int;
 pesoR int;
 BEGIN
-  tableroR:=board_array('x', null,null,null,null,null,null,null,null);
-  tableroR := play(tableroR,0);
+  tic := TIC_TAC_TOE(1);
+  game_id := 0;
+  res := 0;
+  tableroE:=board_array('x', null,null,null,null,null,null,null,null);
+  tableroR := tic.play(board_array('x', null,null,null,null,null,null,null,null),res,game_id);
+   dbms_output.put_line(tableroR(1)||tableroR(2)||tableroR(3));
 END;
 ---------------------------------------------------------------
 
