@@ -64,7 +64,6 @@ turno char(1);
  tableroH board_array;
  pesoN int;
 BEGIN
-  delete from tree
   cant_x:=0;
   cant_o:=0;
   cant_n:=0; 
@@ -209,6 +208,7 @@ game_id number;
 res int;
 pesoR int;
 BEGIN
+  delete from tree;
   tic := TIC_TAC_TOE(1);
   tic.generate_tree;
   game_id := 0;
