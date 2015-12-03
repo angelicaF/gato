@@ -1,3 +1,6 @@
+drop table tree
+drop sequence idRaiz_seq;
+
 -- SET SERVEROUTPUT ON;
 
 ----------------------------------TABLAS Y TIPOS---------------------------------------------------------
@@ -103,7 +106,7 @@ create or replace type tic_tac_toe as object (
 );
 
 ---------------------------------------------------------------------------------------------------------------
--------------------------------------Funcion play--------------------------------------------------------------
+-------------------------------------Body tic tac toe--------------------------------------------------------------
 create or replace
 TYPE BODY TIC_TAC_TOE IS
   member function play(my_move IN board_array,res OUT integer,game_id IN OUT number) return board_array IS
@@ -117,7 +120,7 @@ TYPE BODY TIC_TAC_TOE IS
   select idRaiz, tablero
   from tree
   where idPadre=game_id;
-
+  
   BEGIN
   --busca la jugada actual con el dato que se acaba de insertar
     --create sequence idRaiz_seq;
@@ -152,18 +155,17 @@ TYPE BODY TIC_TAC_TOE IS
       if (iguales = 1)
       then
         tableroActual := est_Curs.idRaiz;
-      --else
-          --no son iguales => ¿?
+        select idPadre, min(peso) into tableroActual, vpeso from tree where idPadre = tableroActual  group by idPadre;
+        select tablero, idRaiz into tableroResp,miTablero from tree where idPadre = tableroActual and peso = vpeso;
+        dbms_output.put_line('hijo '||miTablero||' padre '||tableroActual);
+        dbms_output.put_line('('||tableroResp(1)||','||tableroResp(2)||','||tableroResp(3)||','||
+        tableroResp(4)||','||tableroResp(5)||','||tableroResp(6)||','||tableroResp(7)||','||tableroResp(8)||','||tableroResp(9)||')');
+        game_id := miTablero;
+        return  tableroResp;
       end if;
       dbms_output.put_line('Tablero '||tableroActual);
-    END LOOP;
-    --tableroActual := 567266;
-    select idRaiz, max(peso) into miTablero, vpeso from tree where idPadre = tableroActual and rownum = 1 group by idRaiz;
-    select tablero into tableroResp from tree where idRaiz = miTablero;
-    --select idRaiz, max(peso) from tree where idPadre = 0 and rownum = 1 group by idRaiz
-    dbms_output.put_line('('||tableroResp(1)||','||tableroResp(2)||','||tableroResp(3)||','||
-    tableroResp(4)||','||tableroResp(5)||','||tableroResp(6)||','||tableroResp(7)||','||tableroResp(8)||','||tableroResp(9)||')');
-    game_id := miTablero;
+    END LOOP; 
+    return tableroResp;
   END play;
 -----------------------------------Procedimiento generate_tree---------------------------------------------------------------------------
   MEMBER PROCEDURE generate_tree
@@ -180,6 +182,9 @@ TYPE BODY TIC_TAC_TOE IS
   END generate_tree;
 END;
 --------------------------------------FIN BODY TIC_TAC_TOE---------------------------------------------------------------
+delete from tree;
+drop sequence idRaiz_seq;
+create sequence idRaiz_seq;       --Secuencia para 
 
 declare
 tic TIC_TAC_TOE;
@@ -190,14 +195,19 @@ game_id number;
 res int;
 pesoR int;
 BEGIN
---delete from tree;
 tic := TIC_TAC_TOE(1);
 --tic.generate_tree;
-game_id := 0;
+game_id := 26395;
 res := 0;
-tableroE:=board_array('x', null,null,null,null,null,null,null,null);
-tableroR := tic.play(board_array('x', null,null,null,null,null,null,null,null),res,game_id);
-dbms_output.put_line(tableroR(1)||tableroR(2)||tableroR(3));
+--tableroE:=board_array('x', null,null,null,null,null,null,null,null);
+tableroE := tic.play(board_array('x', 'o','x','x','o',null,'o',null,'x'),res,game_id);
+--game_id := 0;
+--tableroE := tic.play(board_array('x', null,null,null,null,null,'x',null,'o'), res, game_id);
 END;
 ---------------------------------------------------------------
 --declare
+select * 
+from tree where idPadre =25913
+
+
+select * from tree where idPadre = 24050
